@@ -10,9 +10,15 @@ To install, use composer:
 composer require evelabs/oauth2-eveonline
 ```
 
+## Docs
+
+[Eve Online CREST&SSO 3rd party documentation](http://eveonline-third-party-documentation.readthedocs.org/en/latest/crest/authentication/)
+
 ## Usage
 
 Usage is the same as The League's OAuth client, using `\Evelabs\OAuth2\Client\Provider\EveOnline` as the provider.
+
+See `example/example.php` for more insight.
 
 ### Authorization Code Flow
 
@@ -62,6 +68,18 @@ if (!isset($_GET['code'])) {
     // Use this to interact with an API on the users behalf
     echo $token->getToken();
 }
+```
+
+### Managing Scopes
+
+When creating your EveOnline authorization URL, you can specify the scopes your application may authorize.
+
+```php
+$options = [
+    'scope' => ['publicData','characterLocationRead'] // array or string
+];
+
+$authorizationUrl = $provider->getAuthorizationUrl($options);
 ```
 
 ## Testing
