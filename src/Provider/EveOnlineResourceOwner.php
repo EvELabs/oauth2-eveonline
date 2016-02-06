@@ -44,6 +44,15 @@ class EveOnlineResourceOwner extends GenericResourceOwner
         return $this->response['CharacterName'] ?: null;
     }
 
+    /**
+     * Get user CharacterOwnerHash
+     *
+     * @return string|null
+     */
+    public function getCharacterOwnerHash()
+    {
+        return $this->response['CharacterOwnerHash'] ?: null;
+    }
 
     /**
      * Return all of the owner details available as an array.

@@ -91,13 +91,14 @@ class EveOnlineTest extends \PHPUnit_Framework_TestCase
     {
         $characterID = rand(1000,9999);
         $characterName = uniqid();
+        $characterOwnerHash = uniqid();
 
         $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
         $postResponse->shouldReceive('getBody')->andReturn('{"access_token": "mock_access_token", "expires_in": 3600}');
         $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
 
         $userResponse = m::mock('Psr\Http\Message\ResponseInterface');
-        $userResponse->shouldReceive('getBody')->andReturn('{"CharacterID": '.$characterID.', "CharacterName": "'.$characterName.'"}');
+        $userResponse->shouldReceive('getBody')->andReturn('{"CharacterID": '.$characterID.', "CharacterName": "'.$characterName.'", "CharacterOwnerHash": "'.$characterOwnerHash.'"}');
         $userResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
 
         $client = m::mock('GuzzleHttp\ClientInterface');
@@ -114,6 +115,9 @@ class EveOnlineTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($characterName, $user->getCharacterName());
         $this->assertEquals($characterName, $user->toArray()['CharacterName']);
+
+        $this->assertEquals($characterOwnerHash, $user->getCharacterOwnerHash());
+        $this->assertEquals($characterOwnerHash, $user->toArray()['CharacterOwnerHash']);
     }
 
     /**
