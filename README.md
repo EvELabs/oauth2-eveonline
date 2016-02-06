@@ -1,5 +1,10 @@
 # Eve Online Provider for OAuth 2.0 Client
-
+[![Latest Version](https://poser.pugx.org/evelabs/oauth2-eveonline/v/stable)](https://packagist.org/packages/evelabs/oauth2-eveonline)
+[![Software License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
+[![Build Status](https://travis-ci.org/EvELabs/oauth2-eveonline.svg?branch=master)](https://travis-ci.org/EvELabs/oauth2-eveonline)
+[![Code Coverage](https://scrutinizer-ci.com/g/EvELabs/oauth2-eveonline/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/EvELabs/oauth2-eveonline/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/EvELabs/oauth2-eveonline/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/EvELabs/oauth2-eveonline/?branch=master)
+[![Total Downloads](https://poser.pugx.org/evelabs/oauth2-eveonline/downloads)](https://packagist.org/packages/evelabs/oauth2-eveonline)
 This package provides Eve Online OAuth 2.0 support for the PHP League's [OAuth 2.0 Client](https://github.com/thephpleague/oauth2-client).
 
 ## Installation
