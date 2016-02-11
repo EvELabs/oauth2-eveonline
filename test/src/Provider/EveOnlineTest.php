@@ -125,12 +125,33 @@ class EveOnlineTest extends \PHPUnit_Framework_TestCase
      **/
     public function testExceptionThrownWhenErrorObjectReceived()
     {
+        $message = 'Authentication scope needed';
+        $status = rand(400,600);
+        $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
+        $postResponse->shouldReceive('getBody')->andReturn('{"message": "'.$message.'","key": "authNeeded", "exceptionType": "UnauthorizedError"}');
+        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $postResponse->shouldReceive('getStatusCode')->andReturn($status);
+
+        $client = m::mock('GuzzleHttp\ClientInterface');
+        $client->shouldReceive('send')
+            ->times(1)
+            ->andReturn($postResponse);
+        $this->provider->setHttpClient($client);
+        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
+    }
+
+    /**
+     * @expectedException \League\OAuth2\Client\Provider\Exception\IdentityProviderException
+     **/
+    public function testExceptionThrownWhenUnknownObjectReceived()
+    {
         $message = uniqid();
         $status = rand(400,600);
         $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
-        $postResponse->shouldReceive('getBody')->andReturn('{"error_description": "'.$message.'","error": "invalid_request"}');
-        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $postResponse->shouldReceive('getBody')->andReturn('Some invalid non-json response');
+        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'text/html']);
         $postResponse->shouldReceive('getStatusCode')->andReturn($status);
+        $postResponse->shouldReceive('getReasonPhrase')->andReturn('Not Found');
 
         $client = m::mock('GuzzleHttp\ClientInterface');
         $client->shouldReceive('send')
