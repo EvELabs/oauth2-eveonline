@@ -88,6 +88,30 @@ $options = [
 $authorizationUrl = $provider->getAuthorizationUrl($options);
 ```
 
+### Refreshing access token
+
+EVE Online Oauth server issues short-lived(around 20 minutes) access tokens so once it expires you have to obtain a new one using long-lived refresh token. 
+
+```php
+$new_token = $provider->getAccessToken('refresh_token', [
+    'refresh_token' => $old_token->getRefreshToken()
+]);
+```
+
+### Calling CREST
+
+Once you've obtained both (access & refresh) tokens you can start making requests.
+
+```php
+$request = $provider->getAuthenticatedRequest(
+    'GET',
+    'https://crest-tq.eveonline.com/characters/{characterID}/',
+    $accessToken->getToken()
+);
+
+$response = $provider->getResponse($request);
+```
+
 ## Testing
 
 ``` bash
