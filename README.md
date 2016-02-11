@@ -1,4 +1,4 @@
-# Eve Online Provider for OAuth 2.0 Client
+# EVE Online Provider for OAuth 2.0 Client
 [![Latest Version](https://poser.pugx.org/evelabs/oauth2-eveonline/v/stable)](https://packagist.org/packages/evelabs/oauth2-eveonline)
 [![Software License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 [![Build Status](https://travis-ci.org/EvELabs/oauth2-eveonline.svg?branch=master)](https://travis-ci.org/EvELabs/oauth2-eveonline)
