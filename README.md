@@ -112,6 +112,12 @@ $request = $provider->getAuthenticatedRequest(
 $response = $provider->getResponse($request);
 ```
 
+## Framework integration
+
+Symfony 2
+
+- [KnpUOAuth2ClientBundle](https://github.com/knpuniversity/oauth2-client-bundle)
+
 ## Testing
 
 ``` bash
