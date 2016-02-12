@@ -90,26 +90,10 @@ class EveOnline extends AbstractProvider
      */
     protected function checkResponse(ResponseInterface $response, $data)
     {
-
-        if (isset($data['exceptionType'])) {
+        if (isset($data['error']) || isset($data['exceptionType']) || false === is_array($data)) {
+            $message = $this->safeRead($data, 'error_description') || $this->safeRead($data, 'message');
             throw new IdentityProviderException(
-                isset($data['message']) ? $data['message'] : $response->getReasonPhrase(),
-                $response->getStatusCode(),
-                $response
-            );
-        }
-
-        if (false === is_array($data)) {
-            throw new IdentityProviderException(
-                $response->getReasonPhrase(),
-                $response->getStatusCode(),
-                $response
-            );
-        }
-
-        if (isset($data['error'])) {
-            throw new IdentityProviderException(
-                $data['error_description'],
+                $message ?: $response->getReasonPhrase(),
                 $response->getStatusCode(),
                 $response
             );
@@ -127,5 +111,16 @@ class EveOnline extends AbstractProvider
     protected function createResourceOwner(array $response, AccessToken $token)
     {
         return new EveOnlineResourceOwner($response);
+    }
+
+    /**
+     * Internal helper function to safe read from an array
+     * @param mixed $array
+     * @param string|int $key
+     * @return null
+     */
+    private function safeRead($array, $key)
+    {
+        return !empty($array[$key]) ? $array[$key] : null;
     }
 }
