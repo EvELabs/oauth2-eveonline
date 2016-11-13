@@ -90,14 +90,17 @@ class EveOnline extends AbstractProvider
      */
     protected function checkResponse(ResponseInterface $response, $data)
     {
-        if (isset($data['error']) || isset($data['exceptionType']) || false === is_array($data)) {
-            $message = $this->safeRead($data, 'error_description') || $this->safeRead($data, 'message');
-            throw new IdentityProviderException(
-                $message ?: $response->getReasonPhrase(),
-                $response->getStatusCode(),
-                $response
-            );
+        //not throwing anything for 2xx responses
+        if (intval(substr($response->getStatusCode(), 0, 1)) === 2) {
+            return;
         }
+
+        $message = $this->safeRead($data, 'error_description') || $this->safeRead($data, 'message');
+        throw new IdentityProviderException(
+            $message ?: $response->getReasonPhrase(),
+            $response->getStatusCode(),
+            $response
+        );
     }
 
     /**

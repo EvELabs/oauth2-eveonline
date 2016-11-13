@@ -26,20 +26,26 @@ class EveOnlineTest extends \PHPUnit_Framework_TestCase
         parent::tearDown();
     }
 
-    protected function handleRequest(array $responseHeaders, $responseStatus, $responseBody)
+    /**
+     * @param array $responseHeaders
+     * @param $responseStatus
+     * @param $responseBody
+     * @return \GuzzleHttp\ClientInterface
+     */
+    protected function buildClient(array $responseHeaders, $responseStatus, $responseBody)
     {
-        $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
-        $postResponse->shouldReceive('getBody')->andReturn($responseBody);
-        $postResponse->shouldReceive('getHeader')->andReturn($responseHeaders);
-        $postResponse->shouldReceive('getStatusCode')->andReturn($responseStatus);
-        $postResponse->shouldReceive('getReasonPhrase')->andReturn('Totally random reason phrase');
+        $response = m::mock('Psr\Http\Message\ResponseInterface');
+        $response->shouldReceive('getBody')->andReturn($responseBody);
+        $response->shouldReceive('getHeader')->andReturn($responseHeaders);
+        $response->shouldReceive('getStatusCode')->andReturn($responseStatus);
+        $response->shouldReceive('getReasonPhrase')->andReturn('Totally random reason phrase');
 
         $client = m::mock('GuzzleHttp\ClientInterface');
         $client->shouldReceive('send')
             ->times(1)
-            ->andReturn($postResponse);
-        $this->provider->setHttpClient($client);
-        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
+            ->andReturn($response);
+
+        return $client;
     }
 
 
@@ -87,14 +93,11 @@ class EveOnlineTest extends \PHPUnit_Framework_TestCase
 
     public function testGetAccessToken()
     {
-        $response = m::mock('Psr\Http\Message\ResponseInterface');
-        $response->shouldReceive('getBody')->andReturn('{"access_token": "mock_access_token", "expires_in": 3600}');
-        $response->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $message = '{"access_token": "mock_access_token", "expires_in": 3600}';
+        $headers = ['content-type' => 'application/json'];
+        $status = 200;
 
-        $client = m::mock('GuzzleHttp\ClientInterface');
-        $client->shouldReceive('send')->times(1)->andReturn($response);
-        $this->provider->setHttpClient($client);
-
+        $this->provider->setHttpClient($this->buildClient($headers, $status, $message));
         $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
 
         $this->assertEquals('mock_access_token', $token->getToken());
@@ -112,11 +115,14 @@ class EveOnlineTest extends \PHPUnit_Framework_TestCase
 
         $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
         $postResponse->shouldReceive('getBody')->andReturn('{"access_token": "mock_access_token", "expires_in": 3600}');
-        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'application/json']);
+        $postResponse->shouldReceive('getStatusCode')->andReturn(200);
+
 
         $userResponse = m::mock('Psr\Http\Message\ResponseInterface');
         $userResponse->shouldReceive('getBody')->andReturn('{"CharacterID": '.$characterID.', "CharacterName": "'.$characterName.'", "CharacterOwnerHash": "'.$characterOwnerHash.'"}');
-        $userResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $userResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'application/json']);
+        $userResponse->shouldReceive('getStatusCode')->andReturn(200);
 
         $client = m::mock('GuzzleHttp\ClientInterface');
         $client->shouldReceive('send')
@@ -137,16 +143,56 @@ class EveOnlineTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($characterOwnerHash, $user->toArray()['CharacterOwnerHash']);
     }
 
+    public function testCrestGetRequest()
+    {
+        $message = '{"data1": "some_data", "expires_in": 11111}';
+        $headers = ['content-type' => 'application/json'];
+        $status = 200;
+
+        $this->provider->setHttpClient($this->buildClient($headers, $status, $message));
+        $request = $this->provider->getAuthenticatedRequest(
+            'GET',
+            'SomeCoolURL',
+            'someCoolToken'
+        );
+
+        $response = $this->provider->getResponse($request);
+
+        $this->assertTrue(is_array($response));
+        $this->assertTrue(!empty($response));
+    }
+
+    public function testCrestPostRequest()
+    {
+        $message = '{"data1": "Fitting saved", "expires_in": 11111}';
+        $headers = ['content-type' => 'application/json'];
+        $status = 201;
+
+        $this->provider->setHttpClient($this->buildClient($headers, $status, $message));
+        $request = $this->provider->getAuthenticatedRequest(
+            'POST',
+            'SomeCoolURL',
+            'someCoolToken',
+            ['body' => 'someCoolBody']
+        );
+
+        $response = $this->provider->getResponse($request);
+
+        $this->assertTrue(is_array($response));
+        $this->assertTrue(!empty($response['data1']));
+    }
+
     /**
      * @expectedException \League\OAuth2\Client\Provider\Exception\IdentityProviderException
      **/
     public function testExceptionThrownWhenErrorObjectReceived()
     {
         $message = '{"error":"invalid_grant","error_description":"The authorization grant could not be found"}';
-        $headers = ['content-type' => 'json'];
+        $headers = ['content-type' => 'application/json'];
         $status = rand(400,600);
 
-        $this->handleRequest($headers, $status, $message);
+        $this->provider->setHttpClient($this->buildClient($headers, $status, $message));
+        $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
     }
 
     /**
@@ -155,22 +201,37 @@ class EveOnlineTest extends \PHPUnit_Framework_TestCase
     public function testExceptionThrownWhenUnauthorizedErrorReceived()
     {
         $message = '{"message": "Authentication scope needed", "key": "authNeeded", "exceptionType": "UnauthorizedError"}';
-        $headers = ['content-type' => 'json'];
+        $headers = ['content-type' => 'application/json'];
         $status = rand(400,600);
 
-        $this->handleRequest($headers, $status, $message);
+
+        $this->provider->setHttpClient($this->buildClient($headers, $status, $message));
+        $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     **/
+    public function testExceptionThrownWhenInvalidResponseReceived()
+    {
+        $message = 'Some invalid non-json response';
+        $headers = ['content-type' => 'application/json'];
+        $status = 200;
+
+        $this->provider->setHttpClient($this->buildClient($headers, $status, $message));
+        $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
     }
 
     /**
      * @expectedException \League\OAuth2\Client\Provider\Exception\IdentityProviderException
      **/
-    public function testExceptionThrownWhenUnknownObjectReceived()
+    public function testExceptionThrownWhenBadResponseCodeReceived()
     {
-        $message = 'Some invalid non-json response';
-        $status = rand(400,600);
-        $headers = ['content-type' => 'text/html'];
+        $message = '{"message": "Some Error message"}';
+        $headers = ['content-type' => 'application/json'];
+        $status = 500;
 
-        $this->handleRequest($headers, $status, $message);
+        $this->provider->setHttpClient($this->buildClient($headers, $status, $message));
+        $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
     }
-
 }
