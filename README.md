@@ -102,11 +102,26 @@ $new_token = $provider->getAccessToken('refresh_token', [
 
 Once you've obtained both (access & refresh) tokens you can start making requests.
 
+#### Example GET
+
 ```php
 $request = $provider->getAuthenticatedRequest(
     'GET',
     'https://crest-tq.eveonline.com/characters/{characterID}/',
     $accessToken->getToken()
+);
+
+$response = $provider->getResponse($request);
+```
+
+#### Example POST
+
+```php
+$request = $provider->getAuthenticatedRequest(
+    'POST',
+    'https://crest-tq.eveonline.com/characters/{characterID}/',
+    $accessToken->getToken(),
+    ['body' => 'some stuff']
 );
 
 $response = $provider->getResponse($request);
