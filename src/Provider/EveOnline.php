@@ -2,12 +2,13 @@
 
 namespace Evelabs\OAuth2\Client\Provider;
 
-use League\OAuth2\Client\Provider\AbstractProvider;
-use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
-use League\OAuth2\Client\Provider\ResourceOwnerInterface;
-use League\OAuth2\Client\Token\AccessToken;
-use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
 use Psr\Http\Message\ResponseInterface;
+use League\OAuth2\Client\Token\AccessToken;
+use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use Doctrine\Instantiator\Exception\UnexpectedValueException;
+use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 
 class EveOnline extends AbstractProvider
 {
@@ -114,6 +115,42 @@ class EveOnline extends AbstractProvider
     protected function createResourceOwner(array $response, AccessToken $token)
     {
         return new EveOnlineResourceOwner($response);
+    }
+
+    /**
+     * Parses the response according to its content-type header.
+     *
+     * @throws UnexpectedValueException
+     * @param  ResponseInterface $response
+     * @return array
+     */
+    protected function parseResponse(ResponseInterface $response)
+    {
+        $content = (string) $response->getBody();
+
+        if (empty($content) && $response->getStatusCode() === 204) {
+            return $content;
+        }
+
+        $type = $this->getContentType($response);
+
+        if (strpos($type, 'urlencoded') !== false) {
+            parse_str($content, $parsed);
+            return $parsed;
+        }
+
+        // Attempt to parse the string as JSON regardless of content type,
+        // since some providers use non-standard content types. Only throw an
+        // exception if the JSON could not be parsed when it was expected to.
+        try {
+            return $this->parseJson($content);
+        } catch (UnexpectedValueException $e) {
+            if (strpos($type, 'json') !== false) {
+                throw $e;
+            }
+
+            return $content;
+        }
     }
 
     /**
